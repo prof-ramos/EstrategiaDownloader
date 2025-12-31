@@ -1,5 +1,10 @@
 # 📥 Estratégia Downloader v2.0
 
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Platform](https://img.shields.io/badge/platform-web-orange)
+![Stars](https://img.shields.io/github/stars/prof-ramos/EstrategiaDownloader?style=social)
+
 Ferramenta automatizada para download de materiais de cursos da plataforma Estratégia Concursos.
 
 ## ✨ Características
