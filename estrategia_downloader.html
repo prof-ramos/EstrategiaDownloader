@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estratégia Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            margin: 0;
+            font-weight: normal;
+            font-size: 14px;
+        }
+
+        .status {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .status.loading {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+            color: #ff9800;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+            color: #4caf50;
+        }
+
+        .status.error {
+            background: #ffebee;
+            border-left-color: #f44336;
+            color: #f44336;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #00d084;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #00b870;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 208, 132, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .result-item {
+            padding: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .aula-header {
+            font-weight: bold;
+            color: #667eea;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+
+        .video-item {
+            margin-left: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📥 Estratégia Downloader</h1>
+            <p>Baixe todos os materiais do seu curso automaticamente</p>
+        </div>
+
+        <div class="content">
+            <div class="form-group">
+                <label>🔗 ID do Curso (extraído da URL)</label>
+                <input type="text" id="courseId" placeholder="Ex: 358349" value="358349">
+                <div class="help-text">Encontre na URL: /cursos/[ID]/aulas</div>
+            </div>
+
+            <div class="form-group">
+                <label>📋 O que deseja baixar?</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="chk-livros" checked>
+                        <label for="chk-livros">📚 Livros</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="chk-resumos" checked>
+                        <label for="chk-resumos">📄 Resumos</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="chk-slides" checked>
+                        <label for="chk-slides">🎨 Slides</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="chk-mapas" checked>
+                        <label for="chk-mapas">🗺️ Mapas</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status" id="status">
+                ℹ️ Clique em "LISTAR" para descobrir os materiais disponíveis
+            </div>
+
+            <div class="buttons">
+                <button class="btn-primary" id="btnScan">🔍 LISTAR</button>
+                <button class="btn-secondary" id="btnDownload" disabled>⬇️ BAIXAR</button>
+            </div>
+
+            <div class="result" id="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let scannedItems = [];
+
+        const status = document.getElementById('status');
+        const result = document.getElementById('result');
+        const btnScan = document.getElementById('btnScan');
+        const btnDownload = document.getElementById('btnDownload');
+        const courseIdInput = document.getElementById('courseId');
+
+        function setStatus(message, type = 'info') {
+            status.className = 'status';
+            if (type === 'loading') status.classList.add('loading');
+            else if (type === 'success') status.classList.add('success');
+            else if (type === 'error') status.classList.add('error');
+            status.textContent = message;
+        }
+
+        function addResult(html) {
+            result.style.display = 'block';
+            result.innerHTML += html;
+            result.scrollTop = result.scrollHeight;
+        }
+
+        function clearResult() {
+            result.innerHTML = '';
+            result.style.display = 'none';
+        }
+
+        btnScan.addEventListener('click', async function() {
+            const courseId = courseIdInput.value.trim();
+            if (!courseId) {
+                setStatus('❌ Digite o ID do curso', 'error');
+                return;
+            }
+
+            btnScan.disabled = true;
+            btnScan.textContent = '⏳ Escaneando...';
+            setStatus('🔄 Conectando ao Estratégia...', 'loading');
+            clearResult();
+            scannedItems = [];
+
+            try {
+                const listUrl = `https://www.estrategiaconcursos.com.br/app/dashboard/cursos/${courseId}/aulas`;
+                const response = await fetch(listUrl, { credentials: 'include' });
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const aulaLinks = [];
+                const seen = new Set();
+                doc.querySelectorAll('a[href*="/aulas/"]').forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && href.match(/\\/aulas\\/\\d+$/) && !href.includes('videos') && !seen.has(href)) {
+                        seen.add(href);
+                        aulaLinks.push(href);
+                    }
+                });
+
+                addResult(`<div class="aula-header">📖 Encontradas ${aulaLinks.length} aulas</div>`);
+
+                let aulaNum = 0;
+                for (const aulaPath of aulaLinks) {
+                    aulaNum++;
+                    setStatus(`🔄 Processando aula ${aulaNum}/${aulaLinks.length}...`, 'loading');
+
+                    const aulaUrl = `https://www.estrategiaconcursos.com.br${aulaPath}`;
+                    const aulaResponse = await fetch(aulaUrl, { credentials: 'include' });
+                    const aulaHtml = await aulaResponse.text();
+                    const aulaDoc = parser.parseFromString(aulaHtml, 'text/html');
+
+                    // Livros
+                    const pdfLinks = aulaDoc.querySelectorAll('a[href*="api/aluno/pdf"]');
+                    pdfLinks.forEach(link => {
+                        const href = link.getAttribute('href');
+                        const type = href.includes('pdfGrifado') ? 'livro_grifado' : 'livro_original';
+                        scannedItems.push({
+                            type: type,
+                            url: href,
+                            aula: aulaNum,
+                            getFileName: () => `Aula${String(aulaNum).padStart(2, '0')}_${type === 'livro_grifado' ? 'Grifado' : 'Original'}.pdf`
+                        });
+                        addResult(`<div class="video-item">📚 ${type === 'livro_grifado' ? 'Livro Grifado' : 'Livro Original'}</div>`);
+                    });
+
+                    // Vídeos
+                    const videoLinks = aulaDoc.querySelectorAll('a[href*="api/video"]');
+                    let videoNum = 0;
+                    const processedVideos = new Set();
+                    videoLinks.forEach(link => {
+                        const href = link.getAttribute('href');
+                        if (href && href.includes('/download/')) {
+                            const videoIdMatch = href.match(/\\/video\\/(\\d+)\\//);
+                            const videoId = videoIdMatch ? videoIdMatch[1] : null;
+                            
+                            if (href.includes('resumo') && !processedVideos.has(videoId)) {
+                                videoNum++;
+                                processedVideos.add(videoId);
+                            }
+
+                            if (href.includes('resumo')) {
+                                scannedItems.push({
+                                    type: 'resumo',
+                                    url: href,
+                                    aula: aulaNum,
+                                    video: videoNum,
+                                    getFileName: () => `Aula${String(aulaNum).padStart(2, '0')}_V${String(videoNum).padStart(2, '0')}_Resumo.pdf`
+                                });
+                            } else if (href.includes('slideshow')) {
+                                scannedItems.push({
+                                    type: 'slides',
+                                    url: href,
+                                    aula: aulaNum,
+                                    video: videoNum,
+                                    getFileName: () => `Aula${String(aulaNum).padStart(2, '0')}_V${String(videoNum).padStart(2, '0')}_Slides.pdf`
+                                });
+                            } else if (href.includes('mapa_mental')) {
+                                scannedItems.push({
+                                    type: 'mapa_mental',
+                                    url: href,
+                                    aula: aulaNum,
+                                    video: videoNum,
+                                    getFileName: () => `Aula${String(aulaNum).padStart(2, '0')}_V${String(videoNum).padStart(2, '0')}_Mapa.pdf`
+                                });
+                            }
+                        }
+                    });
+
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                btnScan.disabled = false;
+                btnScan.textContent = `✅ LISTAR (${scannedItems.length})`;
+                btnDownload.disabled = scannedItems.length === 0;
+                setStatus(`✅ ${scannedItems.length} itens encontrados! Clique em BAIXAR para começar.`, 'success');
+            } catch (error) {
+                console.error('Erro:', error);
+                btnScan.disabled = false;
+                btnScan.textContent = '🔍 LISTAR';
+                setStatus(`❌ Erro: ${error.message}`, 'error');
+            }
+        });
+
+        btnDownload.addEventListener('click', async function() {
+            const filters = {
+                livro_original: document.getElementById('chk-livros').checked,
+                livro_grifado: document.getElementById('chk-livros').checked,
+                resumo: document.getElementById('chk-resumos').checked,
+                slides: document.getElementById('chk-slides').checked,
+                mapa_mental: document.getElementById('chk-mapas').checked
+            };
+
+            const filtered = scannedItems.filter(i => filters[i.type]);
+            if (filtered.length === 0) {
+                setStatus('❌ Selecione pelo menos um tipo de arquivo', 'error');
+                return;
+            }
+
+            btnDownload.disabled = true;
+            btnDownload.textContent = '⏳ Iniciando...';
+            clearResult();
+            addResult(`<div class="aula-header">📥 Iniciando download de ${filtered.length} arquivos...</div>`);
+
+            let completed = 0;
+            let failed = 0;
+
+            for (const item of filtered) {
+                try {
+                    const a = document.createElement('a');
+                    a.href = item.url;
+                    a.download = item.getFileName();
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    completed++;
+                    setStatus(`📥 ${completed}/${filtered.length}`, 'loading');
+                    addResult(`<div class="video-item">✅ ${item.getFileName()}</div>`);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (e) {
+                    failed++;
+                    addResult(`<div class="video-item" style="color: red;">❌ Erro: ${item.getFileName()}</div>`);
+                }
+            }
+
+            btnDownload.disabled = false;
+            btnDownload.textContent = '⬇️ BAIXAR';
+            setStatus(`✅ Concluído! ${completed} baixados, ${failed} erros.`, 'success');
+        });
+    </script>
+</body>
+</html>
